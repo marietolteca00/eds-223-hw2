@@ -1,0 +1,61 @@
+---
+title: "EDS-223:Exploring Patterns of Environmental Justice"
+Author: "Marie Tolteca"
+format: html
+---
+## Learning outcomes
+- Build effective, responsible, accessible and aesthetically-pleasing maps
+- Practice manipulating vector and raster data to build multi-layer maps
+- Practice making maps in R, specifically using tmap
+
+#Loading Packages/ Libaries Needed for this assignment
+```{r}
+library(tidyverse)
+library(tmap)
+library(here)
+```
+# Bringing in Data
+```{r}
+# here() starts at /Users/marietolteca/Documents/MEDS/EDS-223L/EDS223-HW
+df <- 
+```
+
+
+## Part 1: Legacy of redlining in current environmental (in)justice
+Your first task is to explore historical redlining in Los Angeles and its legacy on present-day environmental justice.
+
+Description
+For this assignment, you must complete the following:
+
+#  Create a map of historical redlining neighborhoods, including:
+neighborhoods colored by HOLC grade
+an appropriate base map
+a clear title and legend
+# Create a table summarizing:
+the percentage of census block groups that fall within each HOLC grade
+Also include the percent of census black groups that don’t fall within a HOLC grade
+Hint: The HOLC data contains the grades and the EJScreen data contains the census blocks, so you will need to combine the data spatially before doing summary statistics. Once you combine and no longer need the geometries, you can use st_drop_geometry().
+# Create at least two visualizations summarizing current conditions (from the EJScreen data) within HOLC grades using the mean of the following variables (you may combine variables or create separate plots):
+% low income
+percentile for Particulate Matter 2.5
+percentile for low life expectancy
+Use ggplot for your visualizations! You will first need to calculate mean of each variable grouped by HOLC grade.
+# Write a brief paragraph reflecting on these results
+Interpret the patterns you observe in your results
+Discuss potential relationships between historical redlining grades and current environmental/socioeconomic conditions
+
+
+#Part 2: Legacy of redlining in biodiversity observations
+Your second task is to explore the legacy of historical redlining in Los Angeles on the collection of bird observations.
+
+## Description
+For this assignment, you must produce the following based on observations from 2021-2023:
+
+# A figure summarizing the percent of observations within redlined neighborhoods within each HOLC grade
+
+Create a visualizations that shows:
+
+The percentage of bird observations within each HOLC grade
+Include an appropiate title, axis labels, and legend
+Hints: Ensure the bird observations and HOLC dataset have matching CRS’, then perform a spatial join to assign each bird observations to a corresponding HOLC grade.
+# *Spolier alert!!* Our results don’t match the findings from Ellis-Soto et al. 2023! Read the abstract of the study. Why might we have obtained different results in our analysis? What did the paper consider that we did not?
