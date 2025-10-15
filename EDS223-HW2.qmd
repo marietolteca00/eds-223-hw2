@@ -13,11 +13,17 @@ format: html
 library(tidyverse)
 library(tmap)
 library(here)
+library(sf)
+library(spData)
 ```
 # Bringing in Data
 ```{r}
 # here() starts at /Users/marietolteca/Documents/MEDS/EDS-223L/EDS223-HW
-df <- 
+#df <- st_read(here('data','ejscreen','EJSCREEN_2023_BG_StatePct_with_AS_CNMI_GU_VI.gdb'))
+birds <- st_read(here('data/gbif-birds-LA/gbif-birds-LA.shp'))
+in_la<- st_read(here('data/mapping-inequality/mapping-inequality-los-angeles.json'))
+
+here()
 ```
 
 
