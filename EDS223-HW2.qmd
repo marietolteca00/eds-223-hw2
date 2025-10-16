@@ -16,27 +16,52 @@ library(here)
 library(sf)
 library(spData)
 ```
-# Bringing in Data
+# Reading in Data- Downloaded
 ```{r}
-# here() starts at /Users/marietolteca/Documents/MEDS/EDS-223L/EDS223-HW
-#df <- st_read(here('data','ejscreen','EJSCREEN_2023_BG_StatePct_with_AS_CNMI_GU_VI.gdb'))
-birds <- st_read(here('data/gbif-birds-LA/gbif-birds-LA.shp'))
-in_la<- st_read(here('data/mapping-inequality/mapping-inequality-los-angeles.json'))
-
+# `here()` starts at /Users/marietolteca/Documents/MEDS/EDS-223L/EDS223-HW
 here()
+
+ej_df <- st_read(here('data','ejscreen','EJSCREEN_2023_BG_StatePct_with_AS_CNMI_GU_VI.gdb'))
+birds <- st_read(here('data/gbif-birds-LA/gbif-birds-LA.shp'))
+map_in <- st_read(here('data/mapping-inequality/mapping-inequality-los-angeles.json'))
 ```
-
-
 ## Part 1: Legacy of redlining in current environmental (in)justice
 Your first task is to explore historical redlining in Los Angeles and its legacy on present-day environmental justice.
-
-Description
+- Description
 For this assignment, you must complete the following:
+```{r}
+# Viewing Class and Geometry Type
+class(birds)
+unique(st_geometry_type(birds))
+st_crs(birds)
+names(birds)
+#head(birds) # Viewing fist 5 rows of data
 
+class(ej_df)
+unique(st_geometry_type(ej_df))
+st_crs(ej_df)
+names(ej_df)
+#head(df)
+
+class(map_in)
+unique(st_geometry_type(map_in))
+st_crs(map_in)
+names(map_in)
+#head(map_in)
+```
 #  Create a map of historical redlining neighborhoods, including:
 neighborhoods colored by HOLC grade
 an appropriate base map
 a clear title and legend
+```{r}
+tm_shape(map_in) +
+  tm_polygons("grade")+
+  tm_compass()+
+  tm_scalebar()+
+  tm_title("title")
+  
+```
+
 # Create a table summarizing:
 the percentage of census block groups that fall within each HOLC grade
 Also include the percent of census black groups that don’t fall within a HOLC grade
