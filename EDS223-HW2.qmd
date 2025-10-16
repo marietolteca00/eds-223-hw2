@@ -54,11 +54,19 @@ neighborhoods colored by HOLC grade
 an appropriate base map
 a clear title and legend
 ```{r}
-tm_shape(map_in) +
+tm_shape(map_in)+
+  tm_polygons()
+```
+
+```{r}
+tm_shape(ej_df)+
+  tm_polygons()+
+tm_shape(map_in,
+         is.main =TRUE) +
   tm_polygons("grade")+
   tm_compass()+
   tm_scalebar()+
-  tm_title("title")
+  tm_title("titlechange")
   
 ```
 
