@@ -8,6 +8,10 @@ format: html
 - Practice manipulating vector and raster data to build multi-layer maps
 - Practice making maps in R, specifically using tmap
 
+- ST_JOIN: combines information, taking in the highest order of geometry (points, polygon,) will change and dataframe
+spatially enabled- they now have geometries, they both still have dataframe
+
+
 #Loading Packages/ Libaries Needed for this assignment
 ```{r}
 library(tidyverse)
@@ -15,6 +19,8 @@ library(tmap)
 library(here)
 library(sf)
 library(spData)
+library(kableExtra)
+library(patchwork)
 ```
 # Reading in Data- Downloaded
 ```{r}
@@ -22,10 +28,21 @@ library(spData)
 here()
 
 ej_df <- st_read(here('data','ejscreen','EJSCREEN_2023_BG_StatePct_with_AS_CNMI_GU_VI.gdb'))
+
 birds <- st_read(here('data/gbif-birds-LA/gbif-birds-LA.shp'))
-map_in <- st_read(here('data/mapping-inequality/mapping-inequality-los-angeles.json'))
+
+HOLC <- st_read(here('data/mapping-inequality/mapping-inequality-los-angeles.json'))
 ```
+
+
+```{r}
+# subset to the features in Cantebury
+la_ej<- ej_df %>%
+  filter(CNTY_NAME == "Los Angeles County") # define the topological relationship
+```
+
 ## Part 1: Legacy of redlining in current environmental (in)justice
+
 Your first task is to explore historical redlining in Los Angeles and its legacy on present-day environmental justice.
 - Description
 For this assignment, you must complete the following:
@@ -36,51 +53,49 @@ unique(st_geometry_type(birds))
 names(birds)
 #head(birds) # Viewing fist 5 rows of data
 
-class(ej_df)
-unique(st_geometry_type(ej_df))
-names(ej_df)
+class(la_ej)
+unique(st_geometry_type(la_ej))
+names(la_ej)
 #head(df)
 
-class(map_in)
-unique(st_geometry_type(map_in))
-names(map_in)
+class(HOLC)
+unique(st_geometry_type(HOLC))
+names(HOLC)
 
 st_crs(birds) #   User input: WGS 84 
 
-st_crs(map_in) #  User input: WGS 84 
+st_crs(HOLC) #  User input: WGS 84 
 
-st_crs(ej_df) #  User input: WGS 84 / Pseudo-Mercator 
+st_crs(la_ej) #  User input: WGS 84 / Pseudo-Mercator 
 
 #head(map_in)
 ```
 ## CRS Transformation - 
 ```{r}
 # Checking transformation
-if(st_crs(ej_df) != st_crs(birds)){
+if(st_crs(la_ej) != st_crs(birds)){
   warning("coordinate reference systems do not match :(")
 }
 
 # Transformation
-birds <- st_transform(birds, crs = st_crs(ej_df))
+birds <- st_transform(birds, crs = st_crs(la_ej))
 
 # Checking if transformation worked 
-if(st_crs(ej_df) == st_crs(birds)){
+if(st_crs(la_ej) == st_crs(birds)){
   warning("coordinate reference systems MATCH :)")
 }
 ```
 ```{r}
-if(st_crs(ej_df) != st_crs(map_in)){
+if(st_crs(la_ej) != st_crs(HOLC)){
   warning("coordinate reference systems do not match :(")
 }
 
-map_in <- st_transform(map_in, crs = st_crs(ej_df))
+HOLC_in <- st_transform(HOLC, crs = st_crs(la_ej))
 
-if(st_crs(ej_df) == st_crs(map_in)){
+if(st_crs(la_ej) == st_crs(HOLC)){
   warning("coordinate reference systems MATCH :)")
 }
 ```
-
-
 
 #  Create a map of historical redlining neighborhoods, including:
 neighborhoods colored by HOLC grade
@@ -88,16 +103,17 @@ an appropriate base map
 a clear title and legend
 ```{r}
 # EJ screen- add the polygons to shape the rest of the area
-tm_shape(ej_df)+
+tm_shape(la_ej)+
   tm_polygons()+
-tm_shape(map_in,
+tm_shape(HOLC_in,
          # Plot mapping inequalities last, but set as main shape
          is.main =TRUE) + 
   tm_polygons(fill = "grade",
-              fill.legend = tm_legend("Grade"))+
+              fill.legend = tm_legend("HOLC Grade"))+
   tm_compass(position = c("left","bottom")) +
-  tm_scalebar(position = c("left", "bottom")) +
-  tm_title("Historical Redlining Neighborhoods by Grade")
+  tm_scalebar(position = c("right", "bottom")) +
+  tm_title("Historical Redlining Neighborhoods by Grade")+
+  tm_basemap("Esri.WorldTopoMap")
   
 ```
 
@@ -107,25 +123,83 @@ Also include the percent of census black groups that don’t fall within a HOLC 
 Hint: The HOLC data contains the grades and the EJScreen data contains the census blocks, so you will need to combine the data spatially before doing summary statistics. Once you combine and no longer need the geometries, you can use st_drop_geometry().
 ```{r}
 # Combining Data mapping inequalities and EJ screen data
-mapin_ej_join <- st_join(ej_df, map_in, join = st_intersects)
+HOLC_laej_join <- st_join(la_ej, HOLC_in, join = st_intersects) #HOLC_in has grade column check `HOLC_in$g`
 
 # Creating Table
-map_summary <- mapin_ej_join %>% 
-  st_drop_geometry() %>% 
-  group_by(grade) %>% 
-  summarize(HOLCareas_by_grade = n()) %>% 
-  mutate(percentage = round(HOLCareas_by_grade / sum(HOLCareas_by_grade) * 100, 3)) %>% 
-  arrange()
+table_summary <- HOLC_laej_join %>%
+  #filter(!is.na(grade)) %>%
+  group_by(grade) %>%
+  summarize(HOLCareas_by_grade = n()) %>%
+  mutate(percentage = round(HOLCareas_by_grade / sum(HOLCareas_by_grade) * 100, 3)) %>%
+  arrange() %>%
+  st_drop_geometry() %>%
+  kable(col.names = c("Grade","HOLC Acrea By Grade","Percentage")) %>%
+  kable_minimal()
+
+
 
 #Viewing Table
-map_summary
-
+table_summary
 ```
 # Create at least two visualizations summarizing current conditions (from the EJScreen data) within HOLC grades using the mean of the following variables (you may combine variables or create separate plots):
 % low income
 percentile for Particulate Matter 2.5
 percentile for low life expectancy
-Use ggplot for your visualizations! You will first need to calculate mean of each variable grouped by HOLC grade.
+Use **ggplot for your visualizations**! You will first need to calculate mean of each variable grouped by HOLC grade.
+
+```{r}
+# Calculating Means
+mean_HOLC <- HOLC_laej_join %>% 
+  filter(!is.na(grade)) %>% # Drops NA values
+  group_by(grade) %>% 
+  summarize(mean_LWIN = mean(LOWINCOME),
+            mean_PM25 = mean(P_PM25, na.rm=TRUE),
+            mean_LE = mean(LIFEEXPPCT, na.rm=TRUE)
+            )
+# PLOTS
+low_income_plot <- ggplot(data = mean_HOLC, aes(x=grade, y=mean_LWIN, fill=grade))+
+  geom_col()+
+  scale_fill_manual(values = c(
+    "A" = "darkgoldenrod",
+    "B" = "lightsalmon",
+    "C" = "steelblue",
+    "D" = "grey")) +
+  labs(fill = "Grade",
+       y = "Mean of Low Income",
+       x = "",
+       title= "Current Average Conditions by HOLC Grade")+
+  theme_light()
+
+PM25_plot <- ggplot(data = mean_HOLC, aes(x=grade, y=mean_PM25, fill = grade))+
+  geom_col()+
+   scale_fill_manual(values = c(
+    "A" = "darkgoldenrod",
+    "B" = "lightsalmon",
+    "C" = "steelblue",
+    "D" = "grey")) +
+  labs(fill = "Grade",
+       y = "Mean of Particulate Matter 2.5",
+       x = "Grade")+
+  theme_light()
+
+life_plot<- ggplot(data = mean_HOLC, aes(x=grade, y=mean_LE, fill = grade))+
+  geom_col()+
+   scale_fill_manual(values = c(
+    "A" = "darkgoldenrod",
+    "B" = "lightsalmon",
+    "C" = "steelblue",
+    "D" = "grey")) +
+  labs(fill = "Grade",
+       y = "Mean of Life Expectancy",
+       x = "")+
+  theme_light()
+
+
+(low_income_plot+PM25_plot+life_plot)
+
+```
+
+**RESULTS**
 # Write a brief paragraph reflecting on these results
 Interpret the patterns you observe in your results
 Discuss potential relationships between historical redlining grades and current environmental/socioeconomic conditions
@@ -139,11 +213,45 @@ Your second task is to explore the legacy of historical redlining in Los Angeles
 
 ## Description
 For this assignment, you must produce the following based on observations from 2021-2023:
+```{r}
+# Checking Year Column
+unique(birds)
+```
 
-# A figure summarizing the percent of observations within redlined neighborhoods within each HOLC grade
 
-# Create a visualizations that shows:
-The percentage of bird observations within each HOLC grade
+# A figure summarizing the percent of observations *within* redlined neighborhoods within each HOLC grade
+## Create a visualizations that shows: **GGPLOT**
+The **percentage of bird observations within each HOLC grade**
 Include an appropiate title, axis labels, and legend
 Hints: Ensure the bird observations and HOLC dataset have matching CRS’, then perform a spatial join to assign each bird observations to a corresponding HOLC grade.
+```{r}
+bird_grade <- st_join(birds, HOLC_laej_join, join = st_within)
+
+bird_summ <- bird_grade %>% 
+  #filter(!is.na(grade)) %>% 
+  group_by(grade) %>% 
+  summarize(bird_obs_grade = n()) %>% 
+  ungroup() %>% 
+  mutate(bird_perc = bird_obs_grade/sum(bird_obs_grade, na.rm=TRUE)) 
+
+```
+
+```{r}
+ggplot(data = bird_summ, aes(x=grade, y=bird_perc, fill = grade))+
+  geom_col()+
+   scale_fill_manual(values = c(
+    "A" = "darkgoldenrod",
+    "B" = "lightsalmon",
+    "C" = "steelblue",
+    "D" = "grey")) +
+  labs(fill = "Grade",
+       y = "birds",
+       x = "")+
+  theme_light()
+
+
+```
+
 # *Spolier alert!!* Our results don’t match the findings from Ellis-Soto et al. 2023! Read the abstract of the study. Why might we have obtained different results in our analysis? What did the paper consider that we did not?
+
+
