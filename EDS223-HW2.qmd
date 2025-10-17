@@ -224,11 +224,13 @@ unique(birds)
 The **percentage of bird observations within each HOLC grade**
 Include an appropiate title, axis labels, and legend
 Hints: Ensure the bird observations and HOLC dataset have matching CRS’, then perform a spatial join to assign each bird observations to a corresponding HOLC grade.
+
 ```{r}
-bird_grade <- st_join(birds, HOLC_laej_join, join = st_within)
+#bird_grade <- st_join(birds, HOLC_laej_join, join = st_within)
+bird_grade2 <- st_join(birds, HOLC_in, join = st_within)
 
 bird_summ <- bird_grade %>% 
-  #filter(!is.na(grade)) %>% 
+  filter(!is.na(grade)) %>% 
   group_by(grade) %>% 
   summarize(bird_obs_grade = n()) %>% 
   ungroup() %>% 
