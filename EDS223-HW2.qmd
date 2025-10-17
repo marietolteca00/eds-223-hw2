@@ -33,40 +33,71 @@ For this assignment, you must complete the following:
 # Viewing Class and Geometry Type
 class(birds)
 unique(st_geometry_type(birds))
-st_crs(birds)
 names(birds)
 #head(birds) # Viewing fist 5 rows of data
 
 class(ej_df)
 unique(st_geometry_type(ej_df))
-st_crs(ej_df)
 names(ej_df)
 #head(df)
 
 class(map_in)
 unique(st_geometry_type(map_in))
-st_crs(map_in)
 names(map_in)
+
+st_crs(birds) #   User input: WGS 84 
+
+st_crs(map_in) #  User input: WGS 84 
+
+st_crs(ej_df) #  User input: WGS 84 / Pseudo-Mercator 
+
 #head(map_in)
 ```
+## CRS Transformation - 
+```{r}
+# Checking transformation
+if(st_crs(ej_df) != st_crs(birds)){
+  warning("coordinate reference systems do not match :(")
+}
+
+# Transformation
+birds <- st_transform(birds, crs = st_crs(ej_df))
+
+# Checking if transformation worked 
+if(st_crs(ej_df) == st_crs(birds)){
+  warning("coordinate reference systems MATCH :)")
+}
+```
+```{r}
+if(st_crs(ej_df) != st_crs(map_in)){
+  warning("coordinate reference systems do not match :(")
+}
+
+map_in <- st_transform(map_in, crs = st_crs(ej_df))
+
+if(st_crs(ej_df) == st_crs(map_in)){
+  warning("coordinate reference systems MATCH :)")
+}
+```
+
+
+
 #  Create a map of historical redlining neighborhoods, including:
 neighborhoods colored by HOLC grade
 an appropriate base map
 a clear title and legend
 ```{r}
-tm_shape(map_in)+
-  tm_polygons()
-```
-
-```{r}
+# EJ screen- add the polygons to shape the rest of the area
 tm_shape(ej_df)+
   tm_polygons()+
 tm_shape(map_in,
-         is.main =TRUE) +
-  tm_polygons("grade")+
-  tm_compass()+
-  tm_scalebar()+
-  tm_title("titlechange")
+         # Plot mapping inequalities last, but set as main shape
+         is.main =TRUE) + 
+  tm_polygons(fill = "grade",
+              fill.legend = tm_legend("Grade"))+
+  tm_compass(position = c("left","bottom")) +
+  tm_scalebar(position = c("left", "bottom")) +
+  tm_title("Historical Redlining Neighborhoods by Grade")
   
 ```
 
@@ -74,6 +105,22 @@ tm_shape(map_in,
 the percentage of census block groups that fall within each HOLC grade
 Also include the percent of census black groups that don’t fall within a HOLC grade
 Hint: The HOLC data contains the grades and the EJScreen data contains the census blocks, so you will need to combine the data spatially before doing summary statistics. Once you combine and no longer need the geometries, you can use st_drop_geometry().
+```{r}
+# Combining Data mapping inequalities and EJ screen data
+mapin_ej_join <- st_join(ej_df, map_in, join = st_intersects)
+
+# Creating Table
+map_summary <- mapin_ej_join %>% 
+  st_drop_geometry() %>% 
+  group_by(grade) %>% 
+  summarize(HOLCareas_by_grade = n()) %>% 
+  mutate(percentage = round(HOLCareas_by_grade / sum(HOLCareas_by_grade) * 100, 3)) %>% 
+  arrange()
+
+#Viewing Table
+map_summary
+
+```
 # Create at least two visualizations summarizing current conditions (from the EJScreen data) within HOLC grades using the mean of the following variables (you may combine variables or create separate plots):
 % low income
 percentile for Particulate Matter 2.5
@@ -82,6 +129,9 @@ Use ggplot for your visualizations! You will first need to calculate mean of eac
 # Write a brief paragraph reflecting on these results
 Interpret the patterns you observe in your results
 Discuss potential relationships between historical redlining grades and current environmental/socioeconomic conditions
+```{r}
+
+```
 
 
 #Part 2: Legacy of redlining in biodiversity observations
@@ -92,8 +142,7 @@ For this assignment, you must produce the following based on observations from 2
 
 # A figure summarizing the percent of observations within redlined neighborhoods within each HOLC grade
 
-Create a visualizations that shows:
-
+# Create a visualizations that shows:
 The percentage of bird observations within each HOLC grade
 Include an appropiate title, axis labels, and legend
 Hints: Ensure the bird observations and HOLC dataset have matching CRS’, then perform a spatial join to assign each bird observations to a corresponding HOLC grade.
