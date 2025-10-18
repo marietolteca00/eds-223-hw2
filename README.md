@@ -24,24 +24,8 @@ Dataset Citation:
     maps
 
 -   Practice making maps in R, specifically using tmap
+<img width="503" height="322" alt="Screenshot 2025-10-18 at 3 27 29 PM" src="https://github.com/user-attachments/assets/d8408801-c7a3-4464-8f1e-e2de5a4bc0ac" />
 
-**Reprository Structure**
-My reprository structure: 
-/Users/marietolteca/Documents/MEDS/EDS-223L/eds-223-hw2/
-├── data
-│   ├── ejscreen
-│       └── EJSCREEN_2023_BG_StatePct_with_AS_CNMI_GU_VI.gdb
-│   ├── gbif-birds-LA
-│       └── gbif-birds-LA.shp
-│   └── mapping-inequality
-│       └── mapping-inequality-los-angeles.json
-├── figs
-│   ├── avg_env_holc.png
-│   ├── bird_plot.png
-│   └── LA_historical_reds.jpeg
-├── eds-223-hw2.Rproj
-├── EDS223-HW2.qmd
-└── README.md
 ------------------------------------------------------------------------
 
 ## Workflow
