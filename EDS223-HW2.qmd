@@ -2,17 +2,27 @@
 title: "EDS-223:Exploring Patterns of Environmental Justice"
 Author: "Marie Tolteca"
 format: html
+editor: 
+  markdown: 
+    wrap: 72
 ---
+
 ## Learning outcomes
-- Build effective, responsible, accessible and aesthetically-pleasing maps
-- Practice manipulating vector and raster data to build multi-layer maps
-- Practice making maps in R, specifically using tmap
 
-- ST_JOIN: combines information, taking in the highest order of geometry (points, polygon,) will change and dataframe
-spatially enabled- they now have geometries, they both still have dataframe
+-   Build effective, responsible, accessible and aesthetically-pleasing
+    maps
 
+-   Practice manipulating vector and raster data to build multi-layer
+    maps
 
-#Loading Packages/ Libaries Needed for this assignment
+-   Practice making maps in R, specifically using tmap
+
+-   ST_JOIN: combines information, taking in the highest order of
+    geometry (points, polygon,) will change and dataframe spatially
+    enabled- they now have geometries, they both still have dataframe
+
+#### Loading Packages/ Libaries Needed for this assignment
+
 ```{r}
 library(tidyverse)
 library(tmap)
@@ -22,7 +32,9 @@ library(spData)
 library(kableExtra)
 library(patchwork)
 ```
-# Reading in Data- Downloaded
+
+#### Reading in Data- Downloaded
+
 ```{r}
 # `here()` starts at /Users/marietolteca/Documents/MEDS/EDS-223L/EDS223-HW
 here()
@@ -34,6 +46,7 @@ birds <- st_read(here('data/gbif-birds-LA/gbif-birds-LA.shp'))
 HOLC <- st_read(here('data/mapping-inequality/mapping-inequality-los-angeles.json'))
 ```
 
+#### Filtering EJ screen data to only LA
 
 ```{r}
 # subset to the features in Cantebury
@@ -43,9 +56,12 @@ la_ej<- ej_df %>%
 
 ## Part 1: Legacy of redlining in current environmental (in)justice
 
-Your first task is to explore historical redlining in Los Angeles and its legacy on present-day environmental justice.
-- Description
-For this assignment, you must complete the following:
+Your first task is to explore historical redlining in Los Angeles and
+its legacy on present-day environmental justice. - Description For this
+assignment, you must complete the following:
+
+#### Data Exploration
+
 ```{r}
 # Viewing Class and Geometry Type
 class(birds)
@@ -70,7 +86,9 @@ st_crs(la_ej) #  User input: WGS 84 / Pseudo-Mercator
 
 #head(map_in)
 ```
-## CRS Transformation - 
+
+#### CRS Transformation :
+
 ```{r}
 # Checking transformation
 if(st_crs(la_ej) != st_crs(birds)){
@@ -85,6 +103,7 @@ if(st_crs(la_ej) == st_crs(birds)){
   warning("coordinate reference systems MATCH :)")
 }
 ```
+
 ```{r}
 if(st_crs(la_ej) != st_crs(HOLC)){
   warning("coordinate reference systems do not match :(")
@@ -97,10 +116,11 @@ if(st_crs(la_ej) == st_crs(HOLC)){
 }
 ```
 
-#  Create a map of historical redlining neighborhoods, including:
-neighborhoods colored by HOLC grade
-an appropriate base map
-a clear title and legend
+# Create a map of historical redlining neighborhoods, including:
+
+neighborhoods colored by HOLC grade an appropriate base map a clear
+title and legend
+
 ```{r}
 # EJ screen- add the polygons to shape the rest of the area
 tm_shape(la_ej)+
@@ -117,10 +137,12 @@ tm_shape(HOLC_in,
   
 ```
 
-# Create a table summarizing:
-the percentage of census block groups that fall within each HOLC grade
-Also include the percent of census black groups that don’t fall within a HOLC grade
-Hint: The HOLC data contains the grades and the EJScreen data contains the census blocks, so you will need to combine the data spatially before doing summary statistics. Once you combine and no longer need the geometries, you can use st_drop_geometry().
+# Table Summarizing Percent of block groups within each Holc Grade:
+
+The percentage of census block groups that fall within each HOLC grade
+Also include the percent of census black groups that don’t fall within a
+HOLC grade
+
 ```{r}
 # Combining Data mapping inequalities and EJ screen data
 HOLC_laej_join <- st_join(la_ej, HOLC_in, join = st_intersects) #HOLC_in has grade column check `HOLC_in$g`
@@ -129,10 +151,11 @@ HOLC_laej_join <- st_join(la_ej, HOLC_in, join = st_intersects) #HOLC_in has gra
 table_summary <- HOLC_laej_join %>%
   #filter(!is.na(grade)) %>%
   group_by(grade) %>%
-  summarize(HOLCareas_by_grade = n()) %>%
+  summarize(HOLCareas_by_grade = n()) %>% # Creates new column
   mutate(percentage = round(HOLCareas_by_grade / sum(HOLCareas_by_grade) * 100, 3)) %>%
   arrange() %>%
-  st_drop_geometry() %>%
+  st_drop_geometry() %>% 
+  ungroup() %>% 
   kable(col.names = c("Grade","HOLC Acrea By Grade","Percentage")) %>%
   kable_minimal()
 
@@ -141,11 +164,12 @@ table_summary <- HOLC_laej_join %>%
 #Viewing Table
 table_summary
 ```
+
 # Create at least two visualizations summarizing current conditions (from the EJScreen data) within HOLC grades using the mean of the following variables (you may combine variables or create separate plots):
-% low income
-percentile for Particulate Matter 2.5
-percentile for low life expectancy
-Use **ggplot for your visualizations**! You will first need to calculate mean of each variable grouped by HOLC grade.
+
+\% low income percentile for Particulate Matter 2.5 percentile for low
+life expectancy Use **ggplot for your visualizations**! You will first
+need to calculate mean of each variable grouped by HOLC grade.
 
 ```{r}
 # Calculating Means
@@ -157,19 +181,22 @@ mean_HOLC <- HOLC_laej_join %>%
             mean_LE = mean(LIFEEXPPCT, na.rm=TRUE)
             )
 # PLOTS
+# Percentile of Low Income
 low_income_plot <- ggplot(data = mean_HOLC, aes(x=grade, y=mean_LWIN, fill=grade))+
   geom_col()+
+  # Adding colors to grade
   scale_fill_manual(values = c(
     "A" = "darkgoldenrod",
     "B" = "lightsalmon",
     "C" = "steelblue",
     "D" = "grey")) +
   labs(fill = "Grade",
-       y = "Mean of Low Income",
+       y = "Mean Particulate of Low Income",
        x = "",
        title= "Current Average Conditions by HOLC Grade")+
   theme_light()
 
+# Percentile of Particulate Matter 2.5
 PM25_plot <- ggplot(data = mean_HOLC, aes(x=grade, y=mean_PM25, fill = grade))+
   geom_col()+
    scale_fill_manual(values = c(
@@ -182,6 +209,7 @@ PM25_plot <- ggplot(data = mean_HOLC, aes(x=grade, y=mean_PM25, fill = grade))+
        x = "Grade")+
   theme_light()
 
+# Percentile of Life Expectancy
 life_plot<- ggplot(data = mean_HOLC, aes(x=grade, y=mean_LE, fill = grade))+
   geom_col()+
    scale_fill_manual(values = c(
@@ -190,46 +218,62 @@ life_plot<- ggplot(data = mean_HOLC, aes(x=grade, y=mean_LE, fill = grade))+
     "C" = "steelblue",
     "D" = "grey")) +
   labs(fill = "Grade",
-       y = "Mean of Life Expectancy",
+       y = "Mean Percentile of Life Expectancy",
        x = "")+
   theme_light()
 
-
+# Combining 3-plots together
 (low_income_plot+PM25_plot+life_plot)
+#+ theme_legend(legend.position = "bottom")
 
 ```
 
-**RESULTS**
-# Write a brief paragraph reflecting on these results
-Interpret the patterns you observe in your results
-Discuss potential relationships between historical redlining grades and current environmental/socioeconomic conditions
-```{r}
+### Reflection on results
 
-```
+-   Interpret the patterns you observe in your results
+-   Discuss potential relationships between historical redlining grades
+    and current environmental/socioeconomic conditions The plots show
+    clear and consistent trends between historical HOLC grades and
+    present-day environmental and socioeconomic conditions.
+    Neighborhoods with worse historical grades (C and D) tend to have
+    higher proportions of low-income residents and higher particulate
+    matter (PM2.5) levels, indicating greater exposure to air pollution.
+    On the other hand, previously rated as more favorable (A and B)
+    places typically have higher life expectancy and lower pollution
+    levels, indicating better overall health results. These trends are a
+    reflection of redlining's long-term effects, as inequality in
+    economic and environmental well-being is still shaped by
+    disinvestment in lower-graded districts.
 
+### Part 2: Legacy of redlining in biodiversity observations Your second
 
-#Part 2: Legacy of redlining in biodiversity observations
-Your second task is to explore the legacy of historical redlining in Los Angeles on the collection of bird observations.
+task is to explore the legacy of historical redlining in Los Angeles on
+the collection of bird observations.
 
-## Description
-For this assignment, you must produce the following based on observations from 2021-2023:
+#### Description
+
+For this assignment, you must produce the following based on
+observations from 2021-2023:
+
 ```{r}
 # Checking Year Column
 unique(birds)
 ```
 
+#### A figure summarizing the percent of observations *within* redlined neighborhoods within each HOLC grade
 
-# A figure summarizing the percent of observations *within* redlined neighborhoods within each HOLC grade
-## Create a visualizations that shows: **GGPLOT**
-The **percentage of bird observations within each HOLC grade**
-Include an appropiate title, axis labels, and legend
-Hints: Ensure the bird observations and HOLC dataset have matching CRS’, then perform a spatial join to assign each bird observations to a corresponding HOLC grade.
+##### Create a visualizations that shows:
+
+The **percentage of bird observations within each HOLC grade** Include
+an appropiate title, axis labels, and legend Hints: Ensure the bird
+observations and HOLC dataset have matching CRS’, then perform a spatial
+join to assign each bird observations to a corresponding HOLC grade.
 
 ```{r}
 #bird_grade <- st_join(birds, HOLC_laej_join, join = st_within)
 bird_grade2 <- st_join(birds, HOLC_in, join = st_within)
 
-bird_summ <- bird_grade %>% 
+bird_summ <- bird_grade2 %>% 
   filter(!is.na(grade)) %>% 
   group_by(grade) %>% 
   summarize(bird_obs_grade = n()) %>% 
@@ -237,6 +281,8 @@ bird_summ <- bird_grade %>%
   mutate(bird_perc = bird_obs_grade/sum(bird_obs_grade, na.rm=TRUE)) 
 
 ```
+
+### Plot it
 
 ```{r}
 ggplot(data = bird_summ, aes(x=grade, y=bird_perc, fill = grade))+
@@ -255,5 +301,3 @@ ggplot(data = bird_summ, aes(x=grade, y=bird_perc, fill = grade))+
 ```
 
 # *Spolier alert!!* Our results don’t match the findings from Ellis-Soto et al. 2023! Read the abstract of the study. Why might we have obtained different results in our analysis? What did the paper consider that we did not?
-
-
